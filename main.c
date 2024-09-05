@@ -4,67 +4,73 @@
 #include <inttypes.h>
 #include <string.h>
 
+#include "fft.h"
+
 #define DATA_BLOCK_ID "data"
-#define RIFF "RIFF"
-#define WAVE "WAVE"
-#define FMT "fmt"
+#define FILE_TYPE_BLOCK_ID "RIFF"
+#define FILE_FORMAT_ID "WAVE"
+#define FORMAT_BLOCK_ID "fmt"
+
+#define puti(a) printf("%d\n", a)
+
+typedef uint32_t uint;
 
 struct wav_header {
-    char riff [4];
-    unsigned long len; //len of file in bytes
-    char wave [4];
-    char fmt[4];
-    unsigned int flen; //format len in bytes
-    uint32_t ftype; //format type
-    uint32_t channels;
-    uint32_t srate; //sample rate
-    uint32_t bytePerSecond; //bytes per second = srate * channels * ftype / 8
+    char fileTypeBlockID[4];
+    uint fileSize;
+    char fileFormatID[4];
+    
+    char formatBlockID[4];
+    uint blockSize;
+    uint16_t audioFormat;
+    uint16_t nChannels;
+    uint frequency;
+    uint bytePerSec;
     uint16_t bytePerBlock;
     uint16_t bitsPerSample;
-    char data[4];
-    uint32_t flen_readable; //in bytes
+
+    char dataBlockID[4];
+    uint dataSize;
 };
 
-/* bytes to integer */
-long btoi(char * __loc, uint8_t __size){
-    long ret = 0;
-    for(int i = 0; i < __size; ++i)
-        ret += __loc[i] << i * 8;
+void show_header(struct wav_header *h){
+    puts(h->fileTypeBlockID);
+    puti(h->fileSize);
+    puts(h->fileFormatID);
 
-    return ret;
+    puts(h->formatBlockID);
+    puti(h->blockSize);
+    puti(h->audioFormat);
+    puti(h->nChannels);
+    puti(h->frequency);
+    puti(h->bytePerSec);
+    puti(h->bytePerBlock);
+    puti(h->bitsPerSample);
+
+    puts(h->dataBlockID);
+    puti(h->dataSize);
 }
 
 int main(int argc, char **argv){
-    char head[40] = {0};
-    char buf[4] = {0};
-    int i = 0;
     struct wav_header header;
 
-    FILE *read, *write;
+    FILE *read;
     read = fopen("audio/foobar.wav", "rb");
-    write = fopen("copy.wav", "w");
-/*
-    fread(head, 1, 40, read);
-    fwrite(head, 1, 40, write);
 
-    fread(buf, 1, 4, read);
-    header.flen_readable = btoi(buf, 4);
+    fread(&header, sizeof(header), 1, read);
 
-    for(int i = 0; i < header.flen_readable; i += 4){
-        fread(buf, 1, 4, read);
-     
-        fwrite(buf, 1, 4, write);
-    }
-*/
-    do {
-        fread(buf, 1, 4, read);
-        i++;
-    } while(!strcmp(buf, "data"));
-
-    printf("%d\n", i);
-
+    show_header(&header);
     fclose(read);
-    fclose(write);
 
+    int arr[2][8] = {0};
+
+    for(int i = 0; i < 8; ++i)
+        arr[0][i] = (double)1000*sin(i) + 1;
+
+    fft(arr[0], arr[1]);
+
+    for(int i = 0; i < size(arr[1]); ++i){
+        puti(arr[1][i]);
+    }
     return 0;
 }
