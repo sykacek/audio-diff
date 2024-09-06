@@ -18,7 +18,7 @@ size_t max(int *__arr);
 /* returns index of min value of array */
 size_t min(int *__arr);
 
-/* bytes to integer */
+/* convert bytes to integer (little endian) */
 unsigned long btoi(char *__src, long __size);
 
 void fft(int *__src, int *__dest);
