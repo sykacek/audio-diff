@@ -10,7 +10,7 @@
 #define FFT_BUFFER 1024
 
 /* return non zero size of array*/
-size_t size(int *__arr);
+size_t size(char *__arr, size_t __size);
 
 /* returns index of maximum value of array */
 size_t max(int *__arr);

@@ -1,20 +1,20 @@
 #include "fft.h"
-#include <math.h>
 
-size_t size(int *__arr)
+size_t size(char *__arr, size_t __size)
 {
     unsigned long i = 0;
     while(*__arr){
         i ++;
-        __arr += 1;
+        __arr++;
     }
-    return i;
+
+    return i/__size;
 }
 
 size_t max(int *__arr)
 {
     int cmp = INT32_MIN;
-    unsigned long  j = 0, len = size(__arr);
+    unsigned long  j = 0, len = size((char *)__arr, sizeof(int));
 
     for(int i = 0; i < len; ++i){
         if(*__arr > cmp){
@@ -31,7 +31,7 @@ size_t max(int *__arr)
 size_t min(int *__arr)
 {
     int cmp = INT32_MAX;
-    unsigned long j = 0, len = size(__arr);
+    unsigned long j = 0, len = size((char *)__arr, sizeof(int));
 
     for(int i = 0; i < len; ++i){
         if(*__arr < cmp){
@@ -56,7 +56,7 @@ unsigned long btoi(char *__src, long __size)
 
 void fft(int *__src, int *__dest)
 {
-    long len = size(__src);
+    long len = size((char *)__src, sizeof(int));
     memset(__dest, 0, len * sizeof(int));
 
     for(int i = 0; i < len; ++i){

@@ -1,3 +1,9 @@
 exe
 out.txt
 copy.wav
+
+*.o
+
+#vscode specific targets
+.vscode
+.vscode*
