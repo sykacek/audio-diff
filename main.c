@@ -8,7 +8,8 @@
 #include "fft.h"
 #include "audio_headers.h"
 
-#define puti(a) printf("%lx\n", a)
+#define putx(a) printf("%lx\n", a)
+#define puti(a) printf("%ld\n", a)
 
 int main(int argc, char **argv){
     char buf[4] = {0};
@@ -32,31 +33,38 @@ int main(int argc, char **argv){
     }
 
     fread(buf, 1, 4, read);
+
+    if(junk_handler(read, &chunk))
+        puts("failed");
+
+    fread(buf, 1, 4, read);
+
+    if(fmt_handler(read, &chunk))
+        puts("failed 2");
+
+    fread(buf, 1, 4, read);
     puts(buf);
 
-    switch(btoi(buf, 4)){
-    case(DATA_INT):{
+    if(fact_handler(read, &chunk))
+        puts("failed 3");
 
-        break;
-    }
-    case(FMT_INT):{
+    fread(buf, 1, 4, read);
+    puts(buf);
 
-        break;
-    }
-    case(JUNK_INT):{
-        junk_ck_t junk = {0};
-        fread(buf, 1, 4, read);
-        junk.blockSize = btoi(buf, 4);
+    if(bext_handler(read, &chunk))
+        puts("failed 4");
 
-        for(uint i = 0; i < junk.blockSize; ++i)
-            fread(buf, 1, 1, read);
+    fread(buf, 1, 4, read);
+    puts(buf);
 
-        puts("read junk");
-        chunk.junk = &junk;
+    if(acid_handler(read, &chunk))
+        puts("failed 5");
 
-        break;
-    }
-    }
+    fread(buf, 1, 4, read);
+    puts(buf);
+
+    if(data_handler(read, &chunk))
+        puts("failed 6");
 
     fclose(read);
 

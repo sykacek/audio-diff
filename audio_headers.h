@@ -2,6 +2,12 @@
 
 #include <stdint.h>
 #include <inttypes.h>
+#include <string.h>
+#include <stdlib.h>
+#include <stdio.h>
+#include <errno.h>
+
+#include "fft.h"
 
 /* define common chunk ID names */
 #define DATA_ID "data"
@@ -13,15 +19,15 @@
 #define FACT_ID "fact"
 #define ACID_ID "acid"
 
-/* ASCII to int constants (got from btoi func)*/
-#define DATA_INT (0x61746164) // ASCII atad
-#define RIFF_INT (0x46464952) //ASCII FFIR
-#define WAVE_INT (0x45564157) //ASCII EVAW
-#define FMT_INT  (0x746d66) //ASCII tmf
-#define JUNK_INT (0x4b4e554a) //ASCII KNUJ
-#define BEXT_INT (0x)
-#define FACT_INT (0x)
-#define ACID_INT (0x)
+/* ASCII to int constants (btoi generated)*/
+#define DATA_INT (0x61746164)   // inverted ASCII data
+#define RIFF_INT (0x46464952)   // inverted ASCII RIFF
+#define WAVE_INT (0x45564157)   // inverted ASCII WAVE
+#define FMT_INT  (0x746d66)     // inverted ASCII fmt
+#define JUNK_INT (0x4b4e554a)   // inverted ASCII JUNK
+#define BEXT_INT (0x74786562)   // inverted ASCII bext
+#define FACT_INT (0x74636166)   // inverted ASCII fact
+#define ACID_INT (0x64696361)   // inverted ASCII acid
 
 typedef uint32_t uint;
 
@@ -46,16 +52,18 @@ typedef struct {
 } junk_ck_t;
 
 typedef struct {
-    uint64_t sampleCount;
+    uint32_t sampleCount;
+    char byte[4];
 } fact_ck_t;
 
 typedef struct {
     uint32_t blockSize;
+    char *byte; //mallocated
 } bext_ck_t;
 
 typedef struct {
-
-    ;
+    uint32_t blockSize;
+    char byte[24];
 } acid_ck_t;
 
 typedef struct {
@@ -63,11 +71,22 @@ typedef struct {
 } data_ck_t;
 
 typedef struct {
-    riff_ck_t *riff;
-    fmt_ck_t *fmt;
-    junk_ck_t *junk;
-    fact_ck_t *fact;
-    acid_ck_t *acid;
-    data_ck_t *data;
-    bext_ck_t *bext;
+    riff_ck_t *riff;    //mallocated
+    fmt_ck_t *fmt;      //mallocated
+    junk_ck_t *junk;    //mallocated
+    fact_ck_t *fact;    //mallocated
+    acid_ck_t *acid;    //mallocated
+    data_ck_t *data;    //mallocated
+    bext_ck_t *bext;    //mallocated
 } ck_t;
+
+ck_t *chunks_init(void);
+void chunks_free(ck_t *__chunks);
+
+int junk_handler(FILE *__file, ck_t *__chunks);
+int riff_handler(FILE *__file, ck_t *__chunks);
+int acid_handler(FILE *__file, ck_t *__chunks);
+int bext_handler(FILE *__file, ck_t *__chunks);
+int fact_handler(FILE *__file, ck_t *__chunks);
+int fmt_handler(FILE *__file, ck_t *__chunks);
+int data_handler(FILE *__file, ck_t *__chunks);
