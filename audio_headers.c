@@ -191,7 +191,7 @@ int data_handler(FILE *__file, ck_t *__chunks)
 
     while(!feof(__file)){
         fread(__chunks->data->buffer, sizeof(uint) * FFT_BUFFER_SIZE, 1, __file);
-        fft(__data->buffer, __data->fftBuffer, FFT_BUFFER_SIZE);
+        //fft(__data->buffer, __data->fftBuffer, FFT_BUFFER_SIZE);
     }
 
     return 0;
