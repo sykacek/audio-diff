@@ -23,7 +23,7 @@
 #define DATA_INT (0x61746164)   // inverted ASCII data
 #define RIFF_INT (0x46464952)   // inverted ASCII RIFF
 #define WAVE_INT (0x45564157)   // inverted ASCII WAVE
-#define FMT_INT  (0x746d66)     // inverted ASCII fmt
+#define FMT_INT  (0x20746d66)   // inverted ASCII fmt
 #define JUNK_INT (0x4b4e554a)   // inverted ASCII JUNK
 #define BEXT_INT (0x74786562)   // inverted ASCII bext
 #define FACT_INT (0x74636166)   // inverted ASCII fact
@@ -36,6 +36,10 @@ typedef struct {
     char fileFormatID[4];
     uint fileSize;
 } riff_ck_t;
+
+typedef struct {
+    uint8_t wasRead;
+} wave_ck_t;
 
 typedef struct {
     uint blockSize;
@@ -58,7 +62,7 @@ typedef struct {
 
 typedef struct {
     uint32_t blockSize;
-    char *byte; //mallocated
+    char *byte;         //mallocated
 } bext_ck_t;
 
 typedef struct {
@@ -68,6 +72,9 @@ typedef struct {
 
 typedef struct {
     uint blockSize;
+    uint *buffer;       //mallocated
+    uint *fftBuffer;    //mallocated
+    uint buffersRead;
 } data_ck_t;
 
 typedef struct {
@@ -78,12 +85,14 @@ typedef struct {
     acid_ck_t *acid;    //mallocated
     data_ck_t *data;    //mallocated
     bext_ck_t *bext;    //mallocated
+    wave_ck_t *wave;    //mallocated
 } ck_t;
 
 ck_t *chunks_init(void);
 void chunks_free(ck_t *__chunks);
 
 int junk_handler(FILE *__file, ck_t *__chunks);
+int wave_handler(FILE *__file, ck_t *__chunks);
 int riff_handler(FILE *__file, ck_t *__chunks);
 int acid_handler(FILE *__file, ck_t *__chunks);
 int bext_handler(FILE *__file, ck_t *__chunks);

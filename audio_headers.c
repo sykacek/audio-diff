@@ -2,7 +2,17 @@
 
 ck_t *chunks_init(void)
 {
-    return (ck_t *)malloc(sizeof(ck_t));
+    ck_t *__ck = (ck_t *)malloc(sizeof(ck_t));
+    __ck->acid = NULL;
+    __ck->bext = NULL;
+    __ck->riff = NULL;
+    __ck->fmt = NULL;
+    __ck->junk = NULL;
+    __ck->fact = NULL;
+    __ck->data = NULL;
+    __ck->wave = NULL;
+
+    return __ck;
 }
 
 void chunks_free(ck_t *__chunks)
@@ -10,19 +20,21 @@ void chunks_free(ck_t *__chunks)
     free(__chunks->acid);
     free(__chunks->bext->byte);
     free(__chunks->bext);
+    free(__chunks->data->buffer);
     free(__chunks->data);
     free(__chunks->fact);
     free(__chunks->fmt);
     free(__chunks->junk);
     free(__chunks->riff);
-    return free(__chunks);
+    free(__chunks->wave);
+    free(__chunks);
 }
 
 int junk_handler(FILE *__file, ck_t *__chunks)
 {
     junk_ck_t *__junk= (junk_ck_t *)malloc(sizeof(junk_ck_t));
     if(__junk == NULL)
-        return -1;
+        return ENOMEM;
 
     __chunks->junk = __junk;
     char buf[4] = {0};
@@ -41,11 +53,22 @@ int junk_handler(FILE *__file, ck_t *__chunks)
     return 0;
 }
 
+int wave_handler(FILE *__file, ck_t *__chunks)
+{
+    wave_ck_t *__wave = (wave_ck_t *)malloc(sizeof(wave_ck_t));
+    if(__wave == NULL)
+        return ENOMEM;
+
+    __chunks ->wave = __wave;
+    __wave->wasRead = 1;
+    return 0;
+}
+
 int riff_handler(FILE *__file, ck_t *__chunks)
 {
     riff_ck_t *__riff = (riff_ck_t *)malloc(sizeof(riff_ck_t));
     if(__riff == NULL)
-        return -1;
+        return ENOMEM;
 
     if(!fread(__riff, sizeof(riff_ck_t), 1, __file)){
         free(__riff);
@@ -60,7 +83,7 @@ int acid_handler(FILE *__file, ck_t *__chunks)
 {
     acid_ck_t *__acid = (acid_ck_t *)malloc(sizeof(acid_ck_t));
     if(__acid == NULL)
-        return -1;
+        return ENOMEM;
 
     if(!fread(__acid, sizeof(acid_ck_t), 1, __file)){
         free(__acid);
@@ -75,7 +98,7 @@ int bext_handler(FILE *__file, ck_t *__chunks)
 {
     bext_ck_t *__bext = (bext_ck_t *)malloc(sizeof(bext_ck_t));
     if(__bext == NULL)
-        return -1;
+        return ENOMEM;
 
     char buf[4];
     if(!fread(buf, 1, 4, __file)){
@@ -102,7 +125,7 @@ int fact_handler(FILE *__file, ck_t *__chunks)
 {
     fact_ck_t *__fact = (fact_ck_t *)malloc(sizeof(fact_ck_t));
     if(__fact == NULL)
-        return -1;
+        return ENOMEM;
 
     if(!fread(__fact, sizeof(fact_ck_t), 1, __file)){
         free(__fact);
@@ -117,7 +140,7 @@ int fmt_handler(FILE *__file, ck_t *__chunks)
 {
     fmt_ck_t *__fmt = (fmt_ck_t *)malloc(sizeof(fmt_ck_t));
     if(__fmt == NULL)
-        return -1;
+        return ENOMEM;
 
     if(!fread(__fmt, sizeof(fmt_ck_t), 1, __file)){
         free(__fmt);
@@ -132,23 +155,44 @@ int data_handler(FILE *__file, ck_t *__chunks)
 {
     data_ck_t *__data = (data_ck_t *)malloc(sizeof(data_ck_t));
     if(__data == NULL)
-        return -1;
+        return ENOMEM;
 
-    if(!fread(__data, sizeof(data_ck_t), 1, __file)){
+    uint *__buffer = (uint *)malloc(sizeof(uint)*FFT_BUFFER_SIZE);
+    if(__buffer == NULL)
+        return ENOMEM;
+    
+
+    memset(__buffer, 0, sizeof(uint) * FFT_BUFFER_SIZE);
+
+    uint *__fftBuffer = (uint *)malloc(sizeof(uint)*FFT_BUFFER_SIZE);
+    if(__fftBuffer == NULL)
+        return ENOMEM;
+
+    memset(__fftBuffer, 0, sizeof(uint) * FFT_BUFFER_SIZE);
+
+    /* read only blockSize*/
+    if(!fread(__data, sizeof(uint), 1, __file)){
         free(__data);
+        free(__buffer);
+        free(__fftBuffer);
         return -1;
     }
 
     __chunks->data = __data;
+    __data->buffer = __buffer;
+    __data->fftBuffer = __fftBuffer;
+    __data->buffersRead = 0;
     if(__chunks->fmt == NULL){
-        fprintf(stderr, "Error: format failed to read");
+        fprintf(stderr, "Error: failed to read format before\n");
         return -1;
     }
 
     char buf[4];
 
-    for(uint i = 0; i < __chunks->data->blockSize; ++i)
-        fread(buf, 1, 1, __file);
+    while(!feof(__file)){
+        fread(__chunks->data->buffer, sizeof(uint) * FFT_BUFFER_SIZE, 1, __file);
+        fft(__data->buffer, __data->fftBuffer, FFT_BUFFER_SIZE);
+    }
 
     return 0;
 }

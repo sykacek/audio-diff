@@ -7,7 +7,8 @@
 #include <string.h>
 #include <math.h>
 
-#define FFT_BUFFER 1024
+#define FFT_BUFFER_SIZE (1 << 12)
+#define FFT_OUT_FILE "fft_left.dat"
 
 /* return non zero size of array*/
 size_t size(char *__arr, size_t __size);
@@ -21,4 +22,5 @@ size_t min(int *__arr);
 /* convert bytes to integer (little endian) */
 unsigned long btoi(char *__src, long __size);
 
-void fft(int *__src, int *__dest);
+/* impelemt radix 2 fft */
+void fft(int *__src, int *__dest, size_t __size);

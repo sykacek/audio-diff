@@ -54,14 +54,13 @@ unsigned long btoi(char *__src, long __size)
     return ret;
 }
 
-void fft(int *__src, int *__dest)
+void fft(int *__src, int *__dest, size_t __size)
 {
-    long len = size((char *)__src, sizeof(int));
-    memset(__dest, 0, len * sizeof(int));
+    memset(__dest, 0, __size * sizeof(int));
 
-    for(int i = 0; i < len; ++i){
-        for(int j = 0; j < len; ++j){
-            *(__dest + i) += *(__src + j) * exp(-2 * M_PI * i * j * I / (len + 1));
+    for(int i = 0; i < __size; ++i){
+        for(int j = 0; j < __size; ++j){
+            *(__dest + i) += *(__src + j) * exp(-2 * M_PI * i * j * I / (__size + 1));
         }
     }
 }
