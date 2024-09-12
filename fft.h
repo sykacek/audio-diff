@@ -31,5 +31,11 @@ size_t min(int *__arr);
 /* convert bytes to integer (little endian) */
 unsigned long btoi(char *__src, long __size);
 
-/* impelemt radix 2 fft from real data */
-void fft(uint32_t *__src, double complex *__dest, size_t __size, uint8_t __bitsPerSample);
+/* basic O(n2) DFT from unsigned int to complex */
+void dft_uint_complex(uint32_t *__src, double complex *__dest, size_t __size, uint8_t __bitsPerSample);
+
+/* DFT from unsigned int data to logarthmic double precision floating point magnitudes */
+void dft_uint_double(uint32_t *__src, double *__dest, size_t __size, uint8_t __bitsPerSample);
+
+/* radix 2 FFT from unsigned int to complex */
+void fft_cooley(double complex *__src, size_t __size);

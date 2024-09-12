@@ -191,6 +191,15 @@ int data_handler(FILE *__file, ck_t *__chunks)
 
     char buf[4];
 
+    memset(__chunks->data->buffer, 0, FFT_BUFFER_SIZE * sizeof(uint));
+    for(uint i = 0; i < FFT_BUFFER_SIZE; ++i){
+        fread(buf, 1, 4, __file);
+        *(__chunks->data->buffer + i) = btoi(buf, 4);
+    }
+
+    dft_uint_complex(__chunks->data->buffer, __chunks->data->fftBuffer, FFT_BUFFER_SIZE, __chunks->fmt->bitsPerSample - 1);
+    __chunks->data->buffersRead++;
+
     /* read data and perform DFT */
     while(!feof(__file)){
         memset(__chunks->data->buffer, 0, FFT_BUFFER_SIZE * sizeof(uint));
@@ -199,7 +208,8 @@ int data_handler(FILE *__file, ck_t *__chunks)
             *(__chunks->data->buffer + i) = btoi(buf, 4);
         }
 
-        fft(__chunks->data->buffer, __chunks->data->fftBuffer, FFT_BUFFER_SIZE, __chunks->fmt->bitsPerSample - 1);
+        //fft_uint_complex(__chunks->data->buffer, __chunks->data->fftBuffer, FFT_BUFFER_SIZE, __chunks->fmt->bitsPerSample - 1);
+        __chunks->data->buffersRead++;
     }
 
     return 0;

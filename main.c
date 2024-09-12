@@ -78,6 +78,9 @@ int main(int argc, char **argv){
     ++i;
     }
 
+    for(int i = 0; i < FFT_BUFFER_SIZE; ++i)
+        printf("%d %lf\n", i, cabs(chunk->data->fftBuffer[i]));
+
     fclose(read);
     chunks_free(chunk);
     return 0;
