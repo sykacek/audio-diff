@@ -8,16 +8,19 @@
 #include "fft.h"
 #include "audio_headers.h"
 
+/* basic formated print macros */
 #define putx(a) printf("%lx\n", a)
+
+#ifndef puti
 #define puti(a) printf("%ld\n", a)
+#endif
+
 #define pftell(__stream) printf("%lx\n", ftell(__stream))
 
 int main(int argc, char **argv){
     char buf[4] = {0};
     ck_t * chunk = chunks_init();
-    
     FILE *read;
-
     uint i = 0;
 
     read = fopen("audio/master.wav", "rb");

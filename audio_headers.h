@@ -62,7 +62,7 @@ typedef struct {
 
 typedef struct {
     uint32_t blockSize;
-    char *byte;         //mallocated
+    char *byte;                     //mallocated
 } bext_ck_t;
 
 typedef struct {
@@ -72,8 +72,8 @@ typedef struct {
 
 typedef struct {
     uint blockSize;
-    uint *buffer;       //mallocated
-    uint *fftBuffer;    //mallocated
+    uint *buffer;                   //mallocated
+    double complex *fftBuffer;      //mallocated
     uint buffersRead;
 } data_ck_t;
 

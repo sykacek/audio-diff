@@ -17,10 +17,12 @@ ck_t *chunks_init(void)
 
 void chunks_free(ck_t *__chunks)
 {
+    /* free all heap (malloc) memory */
     free(__chunks->acid);
     free(__chunks->bext->byte);
     free(__chunks->bext);
     free(__chunks->data->buffer);
+    free(__chunks->data->fftBuffer);
     free(__chunks->data);
     free(__chunks->fact);
     free(__chunks->fmt);
@@ -164,11 +166,11 @@ int data_handler(FILE *__file, ck_t *__chunks)
 
     memset(__buffer, 0, sizeof(uint) * FFT_BUFFER_SIZE);
 
-    uint *__fftBuffer = (uint *)malloc(sizeof(uint)*FFT_BUFFER_SIZE);
+    double complex *__fftBuffer = (double complex*)malloc(sizeof(double complex)*FFT_BUFFER_SIZE);
     if(__fftBuffer == NULL)
         return ENOMEM;
 
-    memset(__fftBuffer, 0, sizeof(uint) * FFT_BUFFER_SIZE);
+    memset(__fftBuffer, 0, sizeof(double complex) * FFT_BUFFER_SIZE);
 
     /* read only blockSize*/
     if(!fread(__data, sizeof(uint), 1, __file)){
@@ -189,9 +191,15 @@ int data_handler(FILE *__file, ck_t *__chunks)
 
     char buf[4];
 
+    /* read data and perform DFT */
     while(!feof(__file)){
-        fread(__chunks->data->buffer, sizeof(uint) * FFT_BUFFER_SIZE, 1, __file);
-        //fft(__data->buffer, __data->fftBuffer, FFT_BUFFER_SIZE);
+        memset(__chunks->data->buffer, 0, FFT_BUFFER_SIZE * sizeof(uint));
+        for(uint i = 0; i < FFT_BUFFER_SIZE; ++i){
+            fread(buf, 1, 4, __file);
+            *(__chunks->data->buffer + i) = btoi(buf, 4);
+        }
+
+        fft(__chunks->data->buffer, __chunks->data->fftBuffer, FFT_BUFFER_SIZE, __chunks->fmt->bitsPerSample - 1);
     }
 
     return 0;

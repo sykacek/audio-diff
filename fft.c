@@ -54,13 +54,16 @@ unsigned long btoi(char *__src, long __size)
     return ret;
 }
 
-void fft(int *__src, int *__dest, size_t __size)
+void fft(uint32_t *__src, double complex *__dest, size_t __size, uint8_t __bitsPerSample)
 {
-    memset(__dest, 0, __size * sizeof(int));
+    memset(__dest, 0, __size * sizeof(double complex));
+    double complex temp;
 
     for(int i = 0; i < __size; ++i){
+        temp = 0;
         for(int j = 0; j < __size; ++j){
-            *(__dest + i) += *(__src + j) * exp(-2 * M_PI * i * j * I / (__size + 1));
+            temp += ((double)*(__src + j) / (1 << __bitsPerSample) + 0 * I) * fft_coefd(i * j / __size);
         }
+        *(__dest + i) = temp;
     }
 }
