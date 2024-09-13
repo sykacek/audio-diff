@@ -35,10 +35,12 @@ unsigned long btoi(char *__src, long __size);
 void *itodc(double complex *__dest, int *__src, size_t __size, uint16_t __bitsPerSample);
 
 /* basic O(n2) DFT from unsigned int to complex */
-void dft_uint_complex(uint32_t *__src, double complex *__dest, size_t __size, uint8_t __bitsPerSample);
+void dft_uint_complex(int *__src, double complex *__dest, size_t __size, uint8_t __bitsPerSample);
+
+void dft_complex_complex(double complex *__src, double complex *__dest, size_t __size);
 
 /* DFT from unsigned int data to logarthmic double precision floating point magnitudes */
-void dft_uint_double(uint32_t *__src, double *__dest, size_t __size, uint8_t __bitsPerSample);
+void dft_uint_double(int *__src, double *__dest, size_t __size, uint8_t __bitsPerSample);
 
 /* radix 2 FFT from unsigned int to complex */
 void fft_cooley(double complex *__src, size_t __size, size_t __step);

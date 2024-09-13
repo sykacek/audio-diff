@@ -62,7 +62,7 @@ size_t size(char *__arr, size_t __size)
         return (void *)__dest;
     }
 
-    void dft_uint_complex(uint32_t *__src, double complex *__dest, size_t __size, uint8_t __bitsPerSample)
+    void dft_uint_complex(int *__src, double complex *__dest, size_t __size, uint8_t __bitsPerSample)
     {
         memset(__dest, 0, __size * sizeof(double complex));
         double complex temp;
@@ -76,7 +76,21 @@ size_t size(char *__arr, size_t __size)
         }
     }
 
-    void dft_uint_double(uint32_t *__src, double *__dest, size_t __size, uint8_t __bitsPerSample)
+    void dft_complex_complex(double complex *__src, double complex *__dest, size_t __size)
+    {
+        memset(__dest, 0, sizeof(double complex) * __size);
+        double complex temp;
+
+        for(size_t i = 0; i < __size; ++i){
+            temp = 0 + 0 * I;
+            for(size_t j = 0; j < __size; ++j)
+                temp += *(__src + j) * fft_coefd(i * j / __size);
+        
+            *(__dest + i) = temp;
+        }
+    }
+
+    void dft_uint_double(int *__src, double *__dest, size_t __size, uint8_t __bitsPerSample)
     {
         memset(__dest, 0, sizeof(double) * __size);
         double complex temp;
@@ -92,16 +106,16 @@ size_t size(char *__arr, size_t __size)
 
     void fft_cooley(double complex *__src, size_t __size, size_t __step)
     {
-        if (__size <= 1) return;
+        if (__size == 1) return;
 
        // even and odd
        fft_cooley(__src, __size / 2, __step * 2);
-       fft_cooley(__src + 1, __size / 2, __step * 2);
+       fft_cooley(__src + __step, __size / 2, __step * 2);
 
        double complex temp = 0;
 
        for(size_t k = 0; k < __size / 2; ++k){
-            temp = fft_coefd(k / __size) * *(__src + k * __step + 1);
+            temp = fft_coefd(k / __size) * *(__src + k * __step + __size / 2);
 
             *(__src + k) = *(__src + k * __step) + temp;
             *(__src + k + __size / 2) = *(__src + k * __step) - temp;

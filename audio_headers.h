@@ -29,6 +29,8 @@
 #define FACT_INT (0x74636166)   // inverted ASCII fact
 #define ACID_INT (0x64696361)   // inverted ASCII acid
 
+#define FMT_MAX_CHANNELS (64)   //dolby atmos 7.1 uses up to 64 
+
 typedef uint32_t uint;
 
 /* chunks data structures */
@@ -72,24 +74,27 @@ typedef struct {
 
 typedef struct {
     uint blockSize;
-    uint *buffer;                   //mallocated
+    int *buffer;                    //mallocated
     double complex *fftBuffer;      //mallocated
     uint buffersRead;
 } data_ck_t;
 
 typedef struct {
-    riff_ck_t *riff;    //mallocated
-    fmt_ck_t *fmt;      //mallocated
-    junk_ck_t *junk;    //mallocated
-    fact_ck_t *fact;    //mallocated
-    acid_ck_t *acid;    //mallocated
-    data_ck_t *data;    //mallocated
-    bext_ck_t *bext;    //mallocated
-    wave_ck_t *wave;    //mallocated
+    riff_ck_t *riff;                //mallocated
+    fmt_ck_t *fmt;                  //mallocated
+    junk_ck_t *junk;                //mallocated
+    fact_ck_t *fact;                //mallocated
+    acid_ck_t *acid;                //mallocated
+    data_ck_t *data;                //mallocated
+    bext_ck_t *bext;                //mallocated
+    wave_ck_t *wave;                //mallocated
 } ck_t;
 
 ck_t *chunks_init(void);
 void chunks_free(ck_t *__chunks);
+
+/* read from __file stream into structure*/
+size_t buffer_read(FILE *__file, ck_t *__chunks, size_t __elements);
 
 int junk_handler(FILE *__file, ck_t *__chunks);
 int wave_handler(FILE *__file, ck_t *__chunks);

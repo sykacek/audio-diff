@@ -17,19 +17,53 @@ ck_t *chunks_init(void)
 
 void chunks_free(ck_t *__chunks)
 {
-    /* free all heap (malloc) memory */
-    free(__chunks->acid);
-    free(__chunks->bext->byte);
-    free(__chunks->bext);
-    free(__chunks->data->buffer);
-    free(__chunks->data->fftBuffer);
-    free(__chunks->data);
-    free(__chunks->fact);
-    free(__chunks->fmt);
-    free(__chunks->junk);
-    free(__chunks->riff);
-    free(__chunks->wave);
+    if(__chunks == NULL) return;
+
+    /* free all heap allocated memory */
+    if(__chunks->acid != NULL)
+        free(__chunks->acid);
+
+    if(__chunks->bext != NULL){
+        free(__chunks->bext->byte);
+        free(__chunks->bext);
+    }
+    if(__chunks->data != NULL){
+        free(__chunks->data->buffer);
+        free(__chunks->data->fftBuffer);
+        free(__chunks->data);
+    }
+    if(__chunks->fact != NULL)        
+        free(__chunks->fact);   
+    
+    if(__chunks->fmt != NULL)
+        free(__chunks->fmt);
+
+    if(__chunks->junk != NULL)
+        free(__chunks->junk);
+
+    if(__chunks->riff != NULL)
+        free(__chunks->riff);
+    
+    if(__chunks->wave != NULL)
+        free(__chunks->wave);
+
     free(__chunks);
+}
+
+size_t buffer_read(FILE *__file, ck_t *__chunks, size_t __elements)
+{
+    size_t i = 0;
+
+    char cbuf[FMT_MAX_CHANNELS * sizeof(int)] = {0};
+
+    for(; i < __elements; i++){
+        memset(cbuf, 0, sizeof(int) * FMT_MAX_CHANNELS);
+        fread(cbuf, __chunks->fmt->bitsPerSample / 8, __chunks->fmt->nChannels, __file);
+
+        *(__chunks->data->buffer + i) = btoi(cbuf, __chunks->fmt->bitsPerSample / 8);
+    }
+
+    return i;
 }
 
 int junk_handler(FILE *__file, ck_t *__chunks)
@@ -159,7 +193,7 @@ int data_handler(FILE *__file, ck_t *__chunks)
     if(__data == NULL)
         return ENOMEM;
 
-    uint *__buffer = (uint *)malloc(sizeof(uint)*FFT_BUFFER_SIZE);
+    int *__buffer = (int *)malloc(sizeof(uint)*FFT_BUFFER_SIZE);
     if(__buffer == NULL)
         return ENOMEM;
     
@@ -191,15 +225,18 @@ int data_handler(FILE *__file, ck_t *__chunks)
 
     char buf[4];
 
-    memset(__chunks->data->buffer, 0, FFT_BUFFER_SIZE * sizeof(uint));
-    for(uint i = 0; i < FFT_BUFFER_SIZE; ++i){
-        fread(buf, 1, 4, __file);
-        *(__chunks->data->buffer + i) = btoi(buf, 4);
-    }
+    double complex temp[FFT_BUFFER_SIZE] = {0};
+
+    buffer_read(__file, __chunks, FFT_BUFFER_SIZE);
 
     //dft_uint_complex(__chunks->data->buffer, __chunks->data->fftBuffer, FFT_BUFFER_SIZE, __chunks->fmt->bitsPerSample - 1);
 
-    itodc(__chunks->data->fftBuffer, __chunks->data, FFT_BUFFER_SIZE, __chunks->fmt->bitsPerSample - 1);
+    itodc(__chunks->data->fftBuffer, __chunks->data->buffer, FFT_BUFFER_SIZE, __chunks->fmt->bitsPerSample - 1);
+    /*dft_complex_complex(__chunks->data->fftBuffer, temp, FFT_BUFFER_SIZE);
+
+    for(int i = 0; i < FFT_BUFFER_SIZE; ++i)
+        *(__chunks->data->fftBuffer + i) = *(temp + i);
+    */
     fft_cooley(__chunks->data->fftBuffer, FFT_BUFFER_SIZE, 1);
     __chunks->data->buffersRead++;
 

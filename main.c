@@ -23,7 +23,12 @@ int main(int argc, char **argv){
     FILE *read;
     uint i = 0;
 
-    read = fopen("audio/master16.wav", "rb");
+    read = fopen("audio/440hz16bit.wav", "rb");
+
+    if(read == NULL){
+        fprintf(stderr, "Error, failed to open file\n");
+        return EBADFD;
+    }
 
     while(!feof(read)){
         fread(buf, 1, 4, read);
