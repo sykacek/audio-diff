@@ -54,6 +54,14 @@ size_t size(char *__arr, size_t __size)
         return ret;
     }
 
+    void *itodc(double complex *__dest, int *__src, size_t __size, uint16_t __bitsPerSample)
+    {
+        for(size_t i = 0; i < __size; ++i)
+            *(__dest + i) = ((double)*(__src + i) / (1 << __bitsPerSample)) + 0 * I;
+
+        return (void *)__dest;
+    }
+
     void dft_uint_complex(uint32_t *__src, double complex *__dest, size_t __size, uint8_t __bitsPerSample)
     {
         memset(__dest, 0, __size * sizeof(double complex));
@@ -93,7 +101,7 @@ size_t size(char *__arr, size_t __size)
        double complex temp = 0;
 
        for(size_t k = 0; k < __size / 2; ++k){
-            temp = fft_coef(k / __size) * *(__src + k * __step + 1);
+            temp = fft_coefd(k / __size) * *(__src + k * __step + 1);
 
             *(__src + k) = *(__src + k * __step) + temp;
             *(__src + k + __size / 2) = *(__src + k * __step) - temp;

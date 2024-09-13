@@ -23,7 +23,7 @@ int main(int argc, char **argv){
     FILE *read;
     uint i = 0;
 
-    read = fopen("audio/master.wav", "rb");
+    read = fopen("audio/master16.wav", "rb");
 
     while(!feof(read)){
         fread(buf, 1, 4, read);

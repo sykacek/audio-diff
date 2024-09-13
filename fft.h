@@ -31,6 +31,9 @@ size_t min(int *__arr);
 /* convert bytes to integer (little endian) */
 unsigned long btoi(char *__src, long __size);
 
+/* convert signed integers to double complex */
+void *itodc(double complex *__dest, int *__src, size_t __size, uint16_t __bitsPerSample);
+
 /* basic O(n2) DFT from unsigned int to complex */
 void dft_uint_complex(uint32_t *__src, double complex *__dest, size_t __size, uint8_t __bitsPerSample);
 

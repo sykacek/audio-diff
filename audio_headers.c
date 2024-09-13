@@ -198,7 +198,9 @@ int data_handler(FILE *__file, ck_t *__chunks)
     }
 
     //dft_uint_complex(__chunks->data->buffer, __chunks->data->fftBuffer, FFT_BUFFER_SIZE, __chunks->fmt->bitsPerSample - 1);
-    fft_cooley(__chunks->data->buffer, FFT_BUFFER_SIZE, 1);
+
+    itodc(__chunks->data->fftBuffer, __chunks->data, FFT_BUFFER_SIZE, __chunks->fmt->bitsPerSample - 1);
+    fft_cooley(__chunks->data->fftBuffer, FFT_BUFFER_SIZE, 1);
     __chunks->data->buffersRead++;
 
     /* read data and perform DFT */
