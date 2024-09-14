@@ -30,6 +30,7 @@ void chunks_free(ck_t *__chunks)
     if(__chunks->data != NULL){
         free(__chunks->data->buffer);
         free(__chunks->data->fftBuffer);
+        free(__chunks->data->logBuffer);
         free(__chunks->data);
     }
     if(__chunks->fact != NULL)        
@@ -58,10 +59,22 @@ size_t buffer_read(FILE *__file, ck_t *__chunks, size_t __elements)
 
     for(; i < __elements; i++){
         memset(cbuf, 0, sizeof(int) * FMT_MAX_CHANNELS);
-        fread(cbuf, __chunks->fmt->bitsPerSample / 8, __chunks->fmt->nChannels, __file);
+        if(!fread(cbuf, __chunks->fmt->bitsPerSample / 8, __chunks->fmt->nChannels, __file))
+            break;
 
         *(__chunks->data->buffer + i) = btoi(cbuf, __chunks->fmt->bitsPerSample / 8);
     }
+
+    return i;
+}
+
+size_t buffer_copy(FILE *__file, ck_t *__chunks, size_t __size)
+{
+    size_t i = 0;
+
+    for(; i < __size; ++i)
+        __chunks->data->logBuffer[i] = (20*log10(cabs(__chunks->data->fftBuffer[i])) \
+        + (__chunks->data->buffersRead - 1) * (__chunks->data->logBuffer[i]) ) / __chunks->data->buffersRead;
 
     return i;
 }
@@ -189,22 +202,33 @@ int fmt_handler(FILE *__file, ck_t *__chunks)
 
 int data_handler(FILE *__file, ck_t *__chunks)
 {
+    /* allocate buffers */
     data_ck_t *__data = (data_ck_t *)malloc(sizeof(data_ck_t));
     if(__data == NULL)
         return ENOMEM;
+
+    __chunks->data = __data;
 
     int *__buffer = (int *)malloc(sizeof(uint)*FFT_BUFFER_SIZE);
     if(__buffer == NULL)
         return ENOMEM;
     
-
     memset(__buffer, 0, sizeof(uint) * FFT_BUFFER_SIZE);
+    __chunks->data->buffer = __buffer;
 
     double complex *__fftBuffer = (double complex*)malloc(sizeof(double complex)*FFT_BUFFER_SIZE);
     if(__fftBuffer == NULL)
         return ENOMEM;
 
     memset(__fftBuffer, 0, sizeof(double complex) * FFT_BUFFER_SIZE);
+    __chunks->data->fftBuffer = __fftBuffer;
+
+    double *__logBuffer = (double *)malloc(sizeof(double) * FFT_BUFFER_SIZE);
+    if(__logBuffer == NULL)
+        return ENOMEM;
+
+    memset(__logBuffer, 0, FFT_BUFFER_SIZE * sizeof(double));
+    __chunks->data->logBuffer = __logBuffer;
 
     /* read only blockSize*/
     if(!fread(__data, sizeof(uint), 1, __file)){
@@ -214,42 +238,30 @@ int data_handler(FILE *__file, ck_t *__chunks)
         return -1;
     }
 
-    __chunks->data = __data;
-    __data->buffer = __buffer;
-    __data->fftBuffer = __fftBuffer;
     __data->buffersRead = 0;
+
     if(__chunks->fmt == NULL){
         fprintf(stderr, "Error: failed to read format before\n");
         return -1;
     }
 
-    char buf[4];
-
-    double complex temp[FFT_BUFFER_SIZE] = {0};
-
-    buffer_read(__file, __chunks, FFT_BUFFER_SIZE);
-
-    //dft_uint_complex(__chunks->data->buffer, __chunks->data->fftBuffer, FFT_BUFFER_SIZE, __chunks->fmt->bitsPerSample - 1);
-
-    itodc(__chunks->data->fftBuffer, __chunks->data->buffer, FFT_BUFFER_SIZE, __chunks->fmt->bitsPerSample - 1);
-    /*dft_complex_complex(__chunks->data->fftBuffer, temp, FFT_BUFFER_SIZE);
-
-    for(int i = 0; i < FFT_BUFFER_SIZE; ++i)
-        *(__chunks->data->fftBuffer + i) = *(temp + i);
-    */
-    fft_cooley(__chunks->data->fftBuffer, FFT_BUFFER_SIZE, 1);
-    __chunks->data->buffersRead++;
-
     /* read data and perform DFT */
     while(!feof(__file)){
-        memset(__chunks->data->buffer, 0, FFT_BUFFER_SIZE * sizeof(uint));
-        for(uint i = 0; i < FFT_BUFFER_SIZE; ++i){
-            fread(buf, 1, 4, __file);
-            *(__chunks->data->buffer + i) = btoi(buf, 4);
-        }
+        /* read int data (PCM) and convert to double complex*/
+        memset(__chunks->data->buffer, 0, FFT_BUFFER_SIZE * sizeof(int));
 
-        //fft_uint_complex(__chunks->data->buffer, __chunks->data->fftBuffer, FFT_BUFFER_SIZE, __chunks->fmt->bitsPerSample - 1);
+        /* procced only with full buffers */
+        if(buffer_read(__file, __chunks, FFT_BUFFER_SIZE) != FFT_BUFFER_SIZE)
+            break;
+        
+        itodc(__chunks->data->fftBuffer, __chunks->data->buffer, FFT_BUFFER_SIZE, __chunks->fmt->bitsPerSample - 1);
+
+        /* perform fft on complex data */
+        fft_cooley(__chunks->data->fftBuffer, FFT_BUFFER_SIZE);
         __chunks->data->buffersRead++;
+
+        if(!buffer_copy(__file, __chunks, FFT_BUFFER_SIZE))
+            return 1;
     }
 
     return 0;

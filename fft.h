@@ -7,7 +7,7 @@
 #include <string.h>
 #include <math.h>
 
-#define FFT_BUFFER_SIZE (1 << 10)
+#define FFT_BUFFER_SIZE (1 << 12)
 #define FFT_OUT_FILE "fft_left.dat"
 #define PI 3.14159265358979323846
 
@@ -43,4 +43,4 @@ void dft_complex_complex(double complex *__src, double complex *__dest, size_t _
 void dft_uint_double(int *__src, double *__dest, size_t __size, uint8_t __bitsPerSample);
 
 /* radix 2 FFT from unsigned int to complex */
-void fft_cooley(double complex *__src, size_t __size, size_t __step);
+void fft_cooley(double complex *__src, const size_t __size);

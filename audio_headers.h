@@ -76,7 +76,8 @@ typedef struct {
     uint blockSize;
     int *buffer;                    //mallocated
     double complex *fftBuffer;      //mallocated
-    uint buffersRead;
+    double *logBuffer;              //mallocated
+    uint buffersRead;   //used as weight for ar. mean
 } data_ck_t;
 
 typedef struct {
@@ -96,6 +97,10 @@ void chunks_free(ck_t *__chunks);
 /* read from __file stream into structure*/
 size_t buffer_read(FILE *__file, ck_t *__chunks, size_t __elements);
 
+/* copy contents of __chunks->data->fftBuffer to __chunks->data->logBuffer using dest = 20*log10(cabs(src)) */
+size_t buffer_copy(FILE *__file, ck_t *__chunks, size_t __size);
+
+/* generic chunk handlers */
 int junk_handler(FILE *__file, ck_t *__chunks);
 int wave_handler(FILE *__file, ck_t *__chunks);
 int riff_handler(FILE *__file, ck_t *__chunks);

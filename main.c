@@ -21,7 +21,6 @@ int main(int argc, char **argv){
     char buf[4] = {0};
     ck_t * chunk = chunks_init();
     FILE *read;
-    uint i = 0;
 
     read = fopen("audio/440hz16bit.wav", "rb");
 
@@ -76,17 +75,28 @@ int main(int argc, char **argv){
         default:{
             fprintf(stderr, "Error: unknown chunk %s\n", buf);
             putx(btoi(buf, 4));
+
+            /* ignore chunk */
+            junk_handler(read, chunk);
             break;
         }
         }
     pftell(read);
-    ++i;
     }
 
-    for(int i = 0; i < FFT_BUFFER_SIZE; ++i)
-        printf("%d %lf\n", i, cabs(chunk->data->fftBuffer[i]));
+    FILE *w = fopen("out.txt", "w");
+    if(w == NULL){
+        fprintf(stderr, "Error: failed to open output file\n");
+        return EBADFD;
+    }
+
+    for(int i = 0; i < FFT_BUFFER_SIZE / 2 && i * chunk->fmt->frequency / FFT_BUFFER_SIZE < 20000; ++i){
+        printf("%d %lf\n", i * chunk->fmt->frequency / FFT_BUFFER_SIZE, cabs(chunk->data->logBuffer[i]));
+        fprintf(w, "%d %lf\n", i * chunk->fmt->frequency / FFT_BUFFER_SIZE, cabs(chunk->data->logBuffer[i]));
+    }
 
     fclose(read);
+    fclose(w);
     chunks_free(chunk);
     return 0;
 }
