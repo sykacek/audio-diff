@@ -7,7 +7,7 @@
 #include <string.h>
 #include <math.h>
 
-#define FFT_BUFFER_SIZE (1 << 12)
+#define FFT_BUFFER_SIZE (1 << 10)
 #define FFT_OUT_FILE "fft_left.dat"
 #define PI 3.14159265358979323846
 
