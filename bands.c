@@ -47,7 +47,7 @@ const double third_weight_A[THIRD_OCTAVE_BANDS] = {
 };
 
 
-int freq_to_octave(double *__octave, double complex *__freq, double __step)
+int freq_to_octave(double *__octave, double *__freq, double __step)
 {
     uint32_t i = 0, j = 0;
     double freq = OCTAVE_BASE, step = __step;
@@ -61,7 +61,7 @@ int freq_to_octave(double *__octave, double complex *__freq, double __step)
     
     while(*(__freq + i) && j < OCTAVE_BANDS){
         while(i * step < octave_high(freq)){
-            *(__octave + j) += cabs(*(__freq + i));
+            *(__octave + j) += *(__freq + i);
             i++;
         }
 
@@ -71,7 +71,7 @@ int freq_to_octave(double *__octave, double complex *__freq, double __step)
     return j ? 0 : 1;
 }
 
-int freq_to_third_octave(double *__octave, double complex *__freq, double __step)
+int freq_to_third_octave(double *__octave, double *__freq, double __step)
 {
     int i = 0, j = 0;
     double freq = THIRD_OCTAVE_BASE, step = __step;
@@ -85,7 +85,7 @@ int freq_to_third_octave(double *__octave, double complex *__freq, double __step
 
     while(*(__freq + i) && j < THIRD_OCTAVE_BANDS){
         while(i * step < third_high(freq)){
-            *(__octave + j) += cabs(*(__freq + i));
+            *(__octave + j) += *(__freq + i);
             i++;
         }
 

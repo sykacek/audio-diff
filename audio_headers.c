@@ -31,6 +31,7 @@ void chunks_free(ck_t *__chunks)
         free(__chunks->data->buffer);
         free(__chunks->data->fftBuffer);
         free(__chunks->data->logBuffer);
+        free(__chunks->data->octaveBuffer);
         free(__chunks->data);
     }
     if(__chunks->fact != NULL)        
@@ -68,7 +69,7 @@ size_t buffer_read(FILE *__file, ck_t *__chunks, size_t __elements)
     return i;
 }
 
-size_t buffer_copy(FILE *__file, ck_t *__chunks, size_t __size)
+size_t buffer_copy(ck_t *__chunks, size_t __size)
 {
     size_t i = 0;
 
@@ -230,6 +231,15 @@ int data_handler(FILE *__file, ck_t *__chunks)
     memset(__logBuffer, 0, FFT_BUFFER_SIZE * sizeof(double));
     __chunks->data->logBuffer = __logBuffer;
 
+    double *__octaveBuffer = (double *)malloc(sizeof(double) * OCTAVE_BANDS);
+    __chunks->data->octaveBufferSize = 0;
+    if(__octaveBuffer == NULL)
+        return ENOMEM;
+
+    memset(__octaveBuffer, 0, sizeof(double) * OCTAVE_BANDS);
+    __chunks->data->octaveBuffer = __octaveBuffer;
+    __chunks->data->octaveBufferSize = OCTAVE_BANDS;
+
     /* read only blockSize*/
     if(!fread(__data, sizeof(uint), 1, __file)){
         free(__data);
@@ -260,9 +270,67 @@ int data_handler(FILE *__file, ck_t *__chunks)
         fft_cooley(__chunks->data->fftBuffer, FFT_BUFFER_SIZE);
         __chunks->data->buffersRead++;
 
-        if(!buffer_copy(__file, __chunks, FFT_BUFFER_SIZE))
+        if(!buffer_copy(__chunks, FFT_BUFFER_SIZE))
             return 1;
     }
+
+    return 0;
+}
+
+int generate_octave(ck_t *__chunks)
+{
+    if(__chunks == NULL)
+        return 1;
+
+    if(__chunks->data == NULL)
+        return 1;
+
+    freq_to_octave(__chunks->data->octaveBuffer, __chunks->data->logBuffer, __chunks->fmt->frequency / FFT_BUFFER_SIZE);
+
+    double maxd = max(__chunks->data->octaveBuffer, __chunks->data->octaveBufferSize);
+    if(!maxd)
+        return 1;
+
+    for(uint i = 0; i < __chunks->data->octaveBufferSize; ++i)
+        __chunks->data->octaveBuffer[i] -= maxd;
+    
+    return 0;
+}
+
+int generate_third_octave(ck_t *__chunks)
+{
+    if(__chunks == NULL)
+        return 1;
+
+    if(__chunks->data == NULL)
+        return 1;
+
+    freq_to_third_octave(__chunks->data->octaveBuffer, __chunks->data->logBuffer, __chunks->fmt->frequency / FFT_BUFFER_SIZE);
+
+    double maxd = max(__chunks->data->octaveBuffer, __chunks->data->octaveBufferSize);
+    if(!maxd)
+        return 1;
+
+    for(uint i = 0; i < __chunks->data->octaveBufferSize; ++i)
+        __chunks->data->octaveBuffer[i] -= maxd;
+
+    return 0;
+}
+
+int write_octave(FILE *__file, ck_t *__chunks)
+{
+    if(__file == NULL || __chunks == NULL)
+        return 1;
+
+    float *p = NULL;
+    if(__chunks->data->octaveBufferSize == OCTAVE_BANDS)
+        p = OCTAVE_FREQUENCY;
+    else if(__chunks->data->octaveBufferSize == THIRD_OCTAVE_BANDS)
+        p = THIRD_OCTAVE_FREQUENCY;
+
+    for(uint i = 0; i < __chunks->data->octaveBufferSize; ++i)
+        fprintf(__file, "%f\t%lf\n", p[i], __chunks->data->octaveBuffer[i]);
+
 
     return 0;
 }

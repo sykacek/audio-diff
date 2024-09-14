@@ -85,22 +85,14 @@ int main(int argc, char **argv){
     pftell(read);
     }
 
-    double third[OCTAVE_BANDS] = {0};
-    freq_to_octave(third, chunk->data->fftBuffer, chunk->fmt->frequency / FFT_BUFFER_SIZE);
-
     FILE *w = fopen("out.txt", "w");
     if(w == NULL){
         fprintf(stderr, "Error: failed to open output file\n");
         return EBADFD;
     }
 
-    for(int i = 0; i < FFT_BUFFER_SIZE / 2 /*&& i * chunk->fmt->frequency / FFT_BUFFER_SIZE < 20000*/; ++i){
-        //printf("%d %lf\n", i * chunk->fmt->frequency / FFT_BUFFER_SIZE, cabs(chunk->data->logBuffer[i]));
-        fprintf(w, "%d %lf\n", i * chunk->fmt->frequency / FFT_BUFFER_SIZE, cabs(chunk->data->logBuffer[i]));
-    }
-
-    for(int i = 0; i  < OCTAVE_BANDS; ++i)
-        printf("%lf\t%lf\n", OCTAVE_FREQUENCY[i], third[i]);
+    generate_octave(chunk);
+    write_octave(w, chunk);
 
     fclose(read);
     fclose(w);

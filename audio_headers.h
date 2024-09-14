@@ -8,6 +8,7 @@
 #include <errno.h>
 
 #include "fft.h"
+#include "bands.h"
 
 /* define common chunk ID names */
 #define DATA_ID "data"
@@ -77,6 +78,8 @@ typedef struct {
     int *buffer;                    //mallocated
     double complex *fftBuffer;      //mallocated
     double *logBuffer;              //mallocated
+    double *octaveBuffer;           //mallocated
+    uint octaveBufferSize;
     uint buffersRead;   //used as weight for ar. mean
 } data_ck_t;
 
@@ -98,7 +101,7 @@ void chunks_free(ck_t *__chunks);
 size_t buffer_read(FILE *__file, ck_t *__chunks, size_t __elements);
 
 /* copy contents of __chunks->data->fftBuffer to __chunks->data->logBuffer using dest = 20*log10(cabs(src)) */
-size_t buffer_copy(FILE *__file, ck_t *__chunks, size_t __size);
+size_t buffer_copy(ck_t *__chunks, size_t __size);
 
 /* generic chunk handlers */
 int junk_handler(FILE *__file, ck_t *__chunks);
@@ -109,3 +112,10 @@ int bext_handler(FILE *__file, ck_t *__chunks);
 int fact_handler(FILE *__file, ck_t *__chunks);
 int fmt_handler(FILE *__file, ck_t *__chunks);
 int data_handler(FILE *__file, ck_t *__chunks);
+
+/* additional band handlers */
+int generate_octave(ck_t *__chunks);
+int generate_third_octave(ck_t *__chunks);
+
+/* write band */
+int write_octave(FILE *__file, ck_t *__chunks);

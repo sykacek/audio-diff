@@ -13,20 +13,18 @@
 
 /* basic print macros */
 #define puti(i) printf("%ld\n", i)
+#define putd(i) printf("%lf\n", i)
 #define putcf(i) printf("%f + %f i \n", crealf(i), cimagf(i))
 
 #define fft_coefd(i) cexp(-2*PI*I*i)
 #define fft_coeff(i) cexpf(-2*PI*I*i)
 
 
-/* return non zero size of array*/
+/* return non zero size of array */
 size_t size(char *__arr, size_t __size);
 
-/* returns index of maximum value of array */
-size_t max(int *__arr);
-
-/* returns index of min value of array */
-size_t min(int *__arr);
+/* return maximum value in array */
+double max(double *__arr, size_t __size);
 
 /* convert bytes to integer (little endian) */
 unsigned long btoi(char *__src, long __size);
