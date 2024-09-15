@@ -1,6 +1,7 @@
 exe
 out.txt
 copy.wav
+gdb.txt
 
 *.o
 

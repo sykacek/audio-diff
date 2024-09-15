@@ -28,9 +28,9 @@
 #define third_high(__freq) (__freq * SQRT2_6)
 #define third_nominal_next(__freq) (__freq * SQRT2_3)
 
-extern const float THIRD_OCTAVE_FREQUENCY[THIRD_OCTAVE_BANDS];
-extern const float OCTAVE_FREQUENCY[OCTAVE_BANDS];
-extern const double third_weight_A[THIRD_OCTAVE_BANDS];
+extern float THIRD_OCTAVE_FREQUENCY[THIRD_OCTAVE_BANDS];
+extern float OCTAVE_FREQUENCY[OCTAVE_BANDS];
+extern float third_weight_A[THIRD_OCTAVE_BANDS];
 
 /* continous frequency response to octave filter */
 int freq_to_octave(double *__octave, double *__freq, double __step);

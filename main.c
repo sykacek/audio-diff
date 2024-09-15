@@ -19,17 +19,40 @@
 #define pftell(__stream) printf("%lx\n", ftell(__stream))
 
 int main(int argc, char **argv){
-    char buf[4] = {0};
-    ck_t * chunk = chunks_init();
+    settings_t * settings = settings_init(argc, argv);
+    if(settings == NULL){
+        settings_help();
+        return 0;
+    }
+
+    if(settings_apply(settings, argc, argv)){
+        settings_einval();
+        return -EINVAL;
+    }
+
+    if(!settings->param){
+        settings_einval();
+        return -EINVAL;
+    }
+
+    printf("%d\n", settings->frequency);
+
+    putx(settings->param);
+
+    ck_t * chunk = chunks_init(settings);
+    if(chunk == NULL){
+        printf("Error: ran out of memomy\n");
+        return ENOMEM;
+    }
+
     FILE *read;
-
     read = fopen("audio/440hz16bit.wav", "rb");
-
     if(read == NULL){
         fprintf(stderr, "Error, failed to open file\n");
         return EBADFD;
     }
 
+    char buf[4] = {0};
     while(!feof(read)){
         fread(buf, 1, 4, read);
         switch(btoi(buf, 4)){
@@ -91,11 +114,16 @@ int main(int argc, char **argv){
         return EBADFD;
     }
 
-    generate_octave(chunk);
+    /* write results */
+    generate_third_octave(chunk);
     write_octave(w, chunk);
 
+    /* close file streams */
     fclose(read);
     fclose(w);
+
+    /* free data structures */
     chunks_free(chunk);
+    settings_free(settings);
     return 0;
 }

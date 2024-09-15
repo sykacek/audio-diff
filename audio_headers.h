@@ -9,6 +9,7 @@
 
 #include "fft.h"
 #include "bands.h"
+#include "arg_input.h"
 
 /* define common chunk ID names */
 #define DATA_ID "data"
@@ -92,16 +93,20 @@ typedef struct {
     data_ck_t *data;                //mallocated
     bext_ck_t *bext;                //mallocated
     wave_ck_t *wave;                //mallocated
+    settings_t *settings;                //mallocated
 } ck_t;
 
-ck_t *chunks_init(void);
+ck_t *chunks_init(settings_t *__settings);
 void chunks_free(ck_t *__chunks);
 
 /* read from __file stream into structure*/
 size_t buffer_read(FILE *__file, ck_t *__chunks, size_t __elements);
 
-/* copy contents of __chunks->data->fftBuffer to __chunks->data->logBuffer using dest = 20*log10(cabs(src)) */
+/* copy contents of __chunks->data->fftBuffer to __chunks->data->logBuffer using dest = (cabs(src)) */
 size_t buffer_copy(ck_t *__chunks, size_t __size);
+
+/* logarithm values in logBuffer */
+size_t buffer_log(ck_t *__chunks, size_t __size);
 
 /* generic chunk handlers */
 int junk_handler(FILE *__file, ck_t *__chunks);

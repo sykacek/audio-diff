@@ -1,19 +1,19 @@
 #include "bands.h"
 
 /* third octave nominal frequency table (rounded) */
-const float THIRD_OCTAVE_FREQUENCY[THIRD_OCTAVE_BANDS] = {
+float THIRD_OCTAVE_FREQUENCY[THIRD_OCTAVE_BANDS] = {
     25, 31.5, 40, 50, 63, 80, 100, 125, 160, 200, 250, 315, 400, \
     500, 630, 800, 1000, 1250, 1600, 2000, 2500, 3150, 4000, 5000, \
     6300, 8000, 10000, 12500, 16000, 20000
 };
 
 /* octave nominal frequency table (rounded)*/
-const float OCTAVE_FREQUENCY[OCTAVE_BANDS] = {
+float OCTAVE_FREQUENCY[OCTAVE_BANDS] = {
     31.5, 63, 125, 250, 500, 1000, 2000, 4000, 8000, 16000
 };
 
 /* A weight filter */
-const double third_weight_A[THIRD_OCTAVE_BANDS] = {
+float third_weight_A[THIRD_OCTAVE_BANDS] = {
     -44.8,
     -39.5,
     -34.5,

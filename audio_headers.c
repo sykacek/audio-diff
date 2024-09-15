@@ -1,6 +1,6 @@
 #include "audio_headers.h"
 
-ck_t *chunks_init(void)
+ck_t *chunks_init(settings_t *__settings)
 {
     ck_t *__ck = (ck_t *)malloc(sizeof(ck_t));
     __ck->acid = NULL;
@@ -11,6 +11,7 @@ ck_t *chunks_init(void)
     __ck->fact = NULL;
     __ck->data = NULL;
     __ck->wave = NULL;
+    __ck->settings = __settings;
 
     return __ck;
 }
@@ -74,8 +75,17 @@ size_t buffer_copy(ck_t *__chunks, size_t __size)
     size_t i = 0;
 
     for(; i < __size; ++i)
-        __chunks->data->logBuffer[i] = (20*log10(cabs(__chunks->data->fftBuffer[i])) \
+        __chunks->data->logBuffer[i] = ((cabs(__chunks->data->fftBuffer[i])) \
         + (__chunks->data->buffersRead - 1) * (__chunks->data->logBuffer[i]) ) / __chunks->data->buffersRead;
+
+    return i;
+}
+
+size_t buffer_log(ck_t *__chunks, size_t __size)
+{
+    size_t i = 0;
+    for(; i < __size; ++i)
+        __chunks->data->logBuffer[i] = 20*log10(__chunks->data->logBuffer[i]);
 
     return i;
 }
@@ -231,14 +241,14 @@ int data_handler(FILE *__file, ck_t *__chunks)
     memset(__logBuffer, 0, FFT_BUFFER_SIZE * sizeof(double));
     __chunks->data->logBuffer = __logBuffer;
 
-    double *__octaveBuffer = (double *)malloc(sizeof(double) * OCTAVE_BANDS);
+    double *__octaveBuffer = (double *)malloc(sizeof(double) * THIRD_OCTAVE_BANDS);
     __chunks->data->octaveBufferSize = 0;
     if(__octaveBuffer == NULL)
         return ENOMEM;
 
-    memset(__octaveBuffer, 0, sizeof(double) * OCTAVE_BANDS);
+    memset(__octaveBuffer, 0, sizeof(double) * THIRD_OCTAVE_BANDS);
     __chunks->data->octaveBuffer = __octaveBuffer;
-    __chunks->data->octaveBufferSize = OCTAVE_BANDS;
+    __chunks->data->octaveBufferSize = THIRD_OCTAVE_BANDS;
 
     /* read only blockSize*/
     if(!fread(__data, sizeof(uint), 1, __file)){
@@ -273,6 +283,9 @@ int data_handler(FILE *__file, ck_t *__chunks)
         if(!buffer_copy(__chunks, FFT_BUFFER_SIZE))
             return 1;
     }
+
+    if(!buffer_log(__chunks, FFT_BUFFER_SIZE))
+        return 1;
 
     return 0;
 }
