@@ -58,6 +58,7 @@ int main(int argc, char **argv){
             return EBADFD;
         }
 
+        /* ADD ERROR HANDLERS */
         char buf[4] = {0};
         while(!feof(read)){
             fread(buf, 1, 4, read);
@@ -71,7 +72,10 @@ int main(int argc, char **argv){
                 break;
             }
             case(FMT_INT):{
-                fmt_handler(read, chunk);
+                if(fmt_handler(read, chunk)){
+                    fprintf(stderr, "Error, invalid file format\n");
+                    return -EINVAL;
+                }
                 break;
             }
             case(JUNK_INT):{

@@ -9,7 +9,7 @@ const char argv_match_short[ST_MAX][3] = { "", "", "", "-c", "-s", "-f", "-o", "
 /* program arguments description */
 const char argv_description[ST_MAX][128] = {"\tdata in third octave band format, used be default",
 "\tdata in octave band format", "ignores silence at the beggining of track",
-"\tspecifies which channel which will be used", "\tstarts computation at specified time in ms",
+"\tspecifies which channel which will be used (default left)", "\tstarts computation at specified time in ms",
 "forces program to use specified sample rate", "\tspecifies output file, by default out.txt",
 "\tprints this help"};
 
@@ -22,6 +22,18 @@ int empty(settings_t *__set, char *__argv, int *__j)
 
 int arg_channel(settings_t *__set, char *__argv, int *__j)
 {
+    if(!strcmp(__argv, "l") || !strcmp(__argv, "left") || !strcmp(__argv, "L") || !strcmp(__argv, "Left")){
+        __set->channel = 1;
+        (*__j)++;
+        return 0;
+    }
+
+    if(!strcmp(__argv, "r") || strcmp(__argv, "right") || strcmp(__argv, "R") || strcmp(__argv, "Right")){
+        __set->channel = 2;
+        (*__j)++;
+        return 0;
+    }
+    
     int ret = atoi(__argv);
     if(!ret)
         return 1;

@@ -55,16 +55,21 @@ void chunks_free(ck_t *__chunks)
 
 size_t buffer_read(FILE *__file, ck_t *__chunks, size_t __elements)
 {
+    if(__chunks->fmt == NULL)
+        return 0;
+    
     size_t i = 0;
-
+    int channel = __chunks->settings->channel - 1;
     char cbuf[FMT_MAX_CHANNELS * sizeof(int)] = {0};
 
     for(; i < __elements; i++){
         memset(cbuf, 0, sizeof(int) * FMT_MAX_CHANNELS);
+
+        /* read one sample on all channels */
         if(!fread(cbuf, __chunks->fmt->bitsPerSample / 8, __chunks->fmt->nChannels, __file))
             break;
 
-        *(__chunks->data->buffer + i) = btoi(cbuf, __chunks->fmt->bitsPerSample / 8);
+        *(__chunks->data->buffer + i) = btoi(cbuf + channel * __chunks->fmt->bitsPerSample / 8, __chunks->fmt->bitsPerSample / 8);
     }
 
     return i;
@@ -203,6 +208,11 @@ int fmt_handler(FILE *__file, ck_t *__chunks)
         return ENOMEM;
 
     if(!fread(__fmt, sizeof(fmt_ck_t), 1, __file)){
+        free(__fmt);
+        return -1;
+    }
+
+    if(__chunks->settings->channel > __fmt->nChannels){
         free(__fmt);
         return -1;
     }

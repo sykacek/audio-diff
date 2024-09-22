@@ -28,7 +28,7 @@
 typedef struct {
     uint64_t param;
     uint8_t error;
-    uint8_t channel;
+    uint8_t channel;    //starting from 1
     uint16_t start;
     uint16_t frequency;
     char output[24];
