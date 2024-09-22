@@ -14,7 +14,9 @@
 #define ST_START_ON_TIME    (4)
 #define ST_FORCE_FREQUENCY  (5)
 #define ST_OUTPUT           (6)   
-#define ST_HELP             (7)   
+#define ST_HELP             (7)
+
+#define ST_EMPTY            (8)
 
 #define ST_MAX              (ST_HELP + 1)
 
@@ -44,22 +46,22 @@ extern const char argv_description[ST_MAX][128];
 extern const int argv_size[ST_MAX];
 
 /* handlers for the arguments */
-int empty(settings_t *__set, char *__argv);
-int arg_channel(settings_t *__set, char *__argv);
-int arg_start(settings_t *__set, char *__argv);
-int arg_frequency(settings_t *__set, char *__argv);
-int arg_output(settings_t *__set, char *__argv);
+int empty(settings_t *__set, char *__argv, int *__j);
+int arg_channel(settings_t *__set, char *__argv, int *__j);
+int arg_start(settings_t *__set, char *__argv, int *__j);
+int arg_frequency(settings_t *__set, char *__argv, int *__j);
+int arg_output(settings_t *__set, char *__argv, int *__j);
 
 
 //static void (*arg_handler[ST_MAX])(settings_t *, char *) = {NULL, NULL, NULL,
 //arg_channel, arg_start, arg_frequency, arg_output, NULL};
 
 typedef struct {
-    int (* fun[ST_MAX])(settings_t *, char *);
+    int (* fun[ST_MAX])(settings_t *, char *, int *);
 } arg_handler_t;
 
 /* check if __flag bit is set */
-#define is_flag(__param, __flag) ((__param & __flag) >> __flag)
+#define is_flag(__param, __flag) ((__param >> __flag) & 1)
 #define set_flag(__param, __flag) (__param |= __flag)
 #define unset_flag(__param, _flag) (__param &= ~__flag)
 #define flag_handle(__param, __flag, __true, __false) (is_flag(__param, __flag) ? __true : __false)

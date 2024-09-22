@@ -248,7 +248,11 @@ int data_handler(FILE *__file, ck_t *__chunks)
 
     memset(__octaveBuffer, 0, sizeof(double) * THIRD_OCTAVE_BANDS);
     __chunks->data->octaveBuffer = __octaveBuffer;
-    __chunks->data->octaveBufferSize = THIRD_OCTAVE_BANDS;
+
+    if(is_flag(__chunks->settings->param, ST_OCTAVE))
+        __chunks->data->octaveBufferSize = OCTAVE_BANDS;
+    else
+        __chunks->data->octaveBufferSize = THIRD_OCTAVE_BANDS;
 
     /* read only blockSize*/
     if(!fread(__data, sizeof(uint), 1, __file)){
@@ -265,7 +269,7 @@ int data_handler(FILE *__file, ck_t *__chunks)
         return -1;
     }
 
-    /* read data and perform DFT */
+    /* read data and perform FFT */
     while(!feof(__file)){
         /* read int data (PCM) and convert to double complex*/
         memset(__chunks->data->buffer, 0, FFT_BUFFER_SIZE * sizeof(int));
@@ -274,6 +278,7 @@ int data_handler(FILE *__file, ck_t *__chunks)
         if(buffer_read(__file, __chunks, FFT_BUFFER_SIZE) != FFT_BUFFER_SIZE)
             break;
         
+        /* int to double complex */
         itodc(__chunks->data->fftBuffer, __chunks->data->buffer, FFT_BUFFER_SIZE, __chunks->fmt->bitsPerSample - 1);
 
         /* perform fft on complex data */
@@ -330,20 +335,21 @@ int generate_third_octave(ck_t *__chunks)
     return 0;
 }
 
-int write_octave(FILE *__file, ck_t *__chunks)
+int write_octave(FILE *__file, double *__buf, int __n)
 {
-    if(__file == NULL || __chunks == NULL)
+    if(__file == NULL || __buf == NULL)
         return 1;
 
-    float *p = NULL;
-    if(__chunks->data->octaveBufferSize == OCTAVE_BANDS)
-        p = OCTAVE_FREQUENCY;
-    else if(__chunks->data->octaveBufferSize == THIRD_OCTAVE_BANDS)
+    float *p;
+    if(__n == THIRD_OCTAVE_BANDS)
         p = THIRD_OCTAVE_FREQUENCY;
+    else {
+        p = OCTAVE_FREQUENCY; 
+        __n = OCTAVE_BANDS;
+    }
 
-    for(uint i = 0; i < __chunks->data->octaveBufferSize; ++i)
-        fprintf(__file, "%f\t%lf\n", p[i], __chunks->data->octaveBuffer[i]);
-
+    for(int i = 0; i < __n; ++i)
+        fprintf(__file, "%f\t\t%lf\n", p[i], __buf[i]);
 
     return 0;
 }

@@ -10,7 +10,7 @@
 #include "bands.h"
 
 /* basic formated print macros */
-#define putx(a) printf("%lx\n", a)
+#define putlx(a) printf("%lx\n", a)
 
 #ifndef puti
 #define puti(a) printf("%ld\n", a)
@@ -35,95 +35,106 @@ int main(int argc, char **argv){
         return -EINVAL;
     }
 
-    printf("%d\n", settings->frequency);
+    int size = 0;
+    if(is_flag(settings->param, ST_OCTAVE))
+        size = OCTAVE_BANDS;
+    else
+        size = THIRD_OCTAVE_BANDS;
 
-    putx(settings->param);
+    double octaveBuffer[2][size];
+    memset(octaveBuffer[0], 0, 2 * size * sizeof(double));
 
-    ck_t * chunk = chunks_init(settings);
-    if(chunk == NULL){
-        printf("Error: ran out of memomy\n");
-        return ENOMEM;
+    for(int i = 0; i < 2; ++i){
+        ck_t * chunk = chunks_init(settings);
+        if(chunk == NULL){
+            printf("Error: ran out of memomy\n");
+            return ENOMEM;
+        }
+
+        FILE *read;
+        read = fopen(argv[argc - 2 + i], "rb");
+        if(read == NULL){
+            fprintf(stderr, "Error, failed to open file\n");
+            return EBADFD;
+        }
+
+        char buf[4] = {0};
+        while(!feof(read)){
+            fread(buf, 1, 4, read);
+            switch(btoi(buf, 4)){
+            case(DATA_INT):{
+                data_handler(read, chunk);
+                break;
+            }
+            case(RIFF_INT):{
+                riff_handler(read, chunk);
+                break;
+            }
+            case(FMT_INT):{
+                fmt_handler(read, chunk);
+                break;
+            }
+            case(JUNK_INT):{
+                junk_handler(read, chunk);
+                break;
+            }
+            case(BEXT_INT):{
+                bext_handler(read, chunk);
+                break;
+            }
+            case(FACT_INT):{
+                fact_handler(read, chunk);
+                break;
+            }
+            case(ACID_INT):{
+                acid_handler(read, chunk);
+                break;
+            }
+            case(WAVE_INT):{
+                wave_handler(read, chunk);
+                puts("wave read");
+                break;
+            }
+            default:{
+                fprintf(stderr, "Error: unknown chunk %lx\n", btoi(buf, 4));
+
+                /* ignore chunk */
+                junk_handler(read, chunk);
+                break;
+            }
+            }
+        }
+
+        /* get and copy the results */
+        if(is_flag(settings->param, ST_OCTAVE))
+            generate_octave(chunk);
+        else 
+            generate_third_octave(chunk);
+        memcpy(octaveBuffer[i], chunk->data->octaveBuffer, size * sizeof(double));
+
+        /* free data structures */
+        fclose(read);
+        chunks_free(chunk);
     }
 
-    FILE *read;
-    read = fopen("audio/440hz16bit.wav", "rb");
-    if(read == NULL){
-        fprintf(stderr, "Error, failed to open file\n");
-        return EBADFD;
-    }
+    char out_file[24] = {0};
+    if(is_flag(settings->param, ST_OUTPUT))
+        memcpy(out_file, settings->output, 24);
+    else
+        memcpy(out_file, "out.txt", 8);
 
-    char buf[4] = {0};
-    while(!feof(read)){
-        fread(buf, 1, 4, read);
-        switch(btoi(buf, 4)){
-        case(DATA_INT):{
-            data_handler(read, chunk);
-            puts("data read");
-            break;
-        }
-        case(RIFF_INT):{
-            riff_handler(read, chunk);
-            puts("riff read");
-            break;
-        }
-        case(FMT_INT):{
-            fmt_handler(read, chunk);
-            puts("fmt read");
-            break;
-        }
-        case(JUNK_INT):{
-            junk_handler(read, chunk);
-            puts("junk handler");
-            break;
-        }
-        case(BEXT_INT):{
-            bext_handler(read, chunk);
-            puts("bext read");
-            break;
-        }
-        case(FACT_INT):{
-            fact_handler(read, chunk);
-            puts("fact read");            
-            break;
-        }
-        case(ACID_INT):{
-            acid_handler(read, chunk);
-            puts("acid read");
-            break;
-        }
-        case(WAVE_INT):{
-            wave_handler(read, chunk);
-            puts("wave read");
-            break;
-        }
-        default:{
-            fprintf(stderr, "Error: unknown chunk %s\n", buf);
-            putx(btoi(buf, 4));
-
-            /* ignore chunk */
-            junk_handler(read, chunk);
-            break;
-        }
-        }
-    pftell(read);
-    }
-
-    FILE *w = fopen("out.txt", "w");
+    FILE *w = fopen(out_file, "w");
     if(w == NULL){
-        fprintf(stderr, "Error: failed to open output file\n");
+        fprintf(stderr, "Error: failed to open %s\n", out_file);
         return EBADFD;
     }
 
-    /* write results */
-    generate_third_octave(chunk);
-    write_octave(w, chunk);
+    /* substarct octave values */
+    for(int i = 0; i < size; ++i)
+        octaveBuffer[0][i] -= octaveBuffer[1][i];
 
-    /* close file streams */
-    fclose(read);
+    write_octave(w, octaveBuffer[0], size);
     fclose(w);
-
-    /* free data structures */
-    chunks_free(chunk);
     settings_free(settings);
     return 0;
 }

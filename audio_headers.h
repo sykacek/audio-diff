@@ -122,5 +122,5 @@ int data_handler(FILE *__file, ck_t *__chunks);
 int generate_octave(ck_t *__chunks);
 int generate_third_octave(ck_t *__chunks);
 
-/* write band */
-int write_octave(FILE *__file, ck_t *__chunks);
+/* write differnce to the file */
+int write_octave(FILE *__file, double *__buf, int __n);

@@ -15,45 +15,50 @@ const char argv_description[ST_MAX][128] = {"\tdata in third octave band format,
 
 const int arg_size[ST_MAX] = {0, 0, 0, 1, 1, 1, 1, 0};
 
-int empty(settings_t *__set, char *__argv)
+int empty(settings_t *__set, char *__argv, int *__j)
 {
     return 0;
 }
 
-int arg_channel(settings_t *__set, char *__argv)
+int arg_channel(settings_t *__set, char *__argv, int *__j)
 {
     int ret = atoi(__argv);
     if(!ret)
         return 1;
     
     __set->channel = ret;
+    (*__j)++;
     return 0;
 }
 
-int arg_start(settings_t *__set, char *__argv)
+int arg_start(settings_t *__set, char *__argv, int *__j)
 {
     int ret = atoi(__argv);
     if(!ret)
         return 1;
     
     __set->start = atoi(__argv);
+    (*__j)++;
     return 0;
 }
 
-int arg_frequency(settings_t *__set, char *__argv)
+int arg_frequency(settings_t *__set, char *__argv, int *__j)
 {
     int ret = atoi(__argv);
     if(!ret)
         return 1;
 
     __set->frequency = atoi(__argv);
+    (*__j)++;
     return 0;
 }
 
-int arg_output(settings_t *__set, char *__argv)
+int arg_output(settings_t *__set, char *__argv, int *__j)
 {
     if(strcpy(__set->output, __argv) == NULL)
         return 1;
+
+    (*__j)++;
     
     return 0;
 }
@@ -61,7 +66,7 @@ int arg_output(settings_t *__set, char *__argv)
 settings_t *settings_init(int __argc, char **__argv)
 {
     if(__argc < 2)
-        return 0;
+        return NULL;
     /* if help is specified, abort */
     if(!strcmp(__argv[1], "--help") || !strcmp(__argv[1], "-h"))
         return NULL;
@@ -74,19 +79,21 @@ int settings_apply(settings_t *__settings, int __argc, char **__argv)
 {
     static arg_handler_t arg_handler;
 
-    int (*functions[ST_MAX])(settings_t *, char *) = {empty, empty, empty,
+    int (*functions[ST_MAX])(settings_t *, char *, int *) = {empty, empty, empty,
     arg_channel, arg_start, arg_frequency, arg_output, empty};
     
     memcpy(arg_handler.fun, functions, sizeof(functions));
     
     int i = 0, j = 1, ret;
+
+    /* read line arguments */
     while(j < __argc - 2){
         i = 0;
+        __settings->error = 0xFF;
         while(i < ST_MAX){
-            __settings->error = 0xFF;
             if(!strcmp(__argv[j], argv_match[i]) || !strcmp(__argv[j], argv_match_short[i])){
                 set_flag(__settings->param, (1 << i));
-                ret = arg_handler.fun[i](__settings, __argv[++j]);
+                ret = arg_handler.fun[i](__settings, __argv[j + 1], &j);
 
                 if(ret)
                     return ret;
@@ -96,10 +103,22 @@ int settings_apply(settings_t *__settings, int __argc, char **__argv)
             }
             i++;
         }
+        /* catch bad params */
         if(__settings->error)
-            return EINVAL;
+            return -EINVAL;
         j++;
     }
+
+    /* octave and the third octave cannot be set at the same time */
+    if(is_flag(__settings->param, ST_OCTAVE) && is_flag(__settings->param, ST_THIRD_OCTAVE))
+        return -EINVAL;
+
+    if(!is_flag(__settings->param, ST_OCTAVE))
+        set_flag(__settings->param, ST_THIRD_OCTAVE);
+
+    /* if there are not any param, set empty flag */
+    if(__argc == 3)
+        set_flag(__settings->param, (1 << ST_EMPTY));
 
     return 0;
 }
