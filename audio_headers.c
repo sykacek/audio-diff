@@ -140,6 +140,9 @@ int riff_handler(FILE *__file, ck_t *__chunks)
         return -1;
     }
 
+    if(!strcmp(__riff->fileFormatID, RIFF_ID))
+        return -2;
+
     __chunks->riff = __riff;
     return 0;
 }

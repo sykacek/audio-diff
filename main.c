@@ -64,11 +64,18 @@ int main(int argc, char **argv){
             fread(buf, 1, 4, read);
             switch(btoi(buf, 4)){
             case(DATA_INT):{
-                data_handler(read, chunk);
+                if(data_handler(read, chunk)){
+                    fprintf(stderr, "Error, failed to read data\n");
+                    return ENOMEM;
+                }
+    
                 break;
             }
             case(RIFF_INT):{
-                riff_handler(read, chunk);
+                if(riff_handler(read, chunk)){
+                    fprintf(stderr, "Error: invalid file format (only RIFF is accepted)\n");
+                    return -1;
+                }
                 break;
             }
             case(FMT_INT):{
@@ -79,28 +86,42 @@ int main(int argc, char **argv){
                 break;
             }
             case(JUNK_INT):{
-                junk_handler(read, chunk);
+                if(junk_handler(read, chunk)){
+                    fprintf(stderr, "Error: out of memory\n");
+                    return ENOMEM;
+                }
                 break;
             }
             case(BEXT_INT):{
-                bext_handler(read, chunk);
+                if(bext_handler(read, chunk)){
+                    fprintf(stderr, "Error: ran out of memory\n");
+                    return -ENOMEM;
+                }
                 break;
             }
             case(FACT_INT):{
-                fact_handler(read, chunk);
+                if(fact_handler(read, chunk)){
+                    fprintf(stderr, "Error: ran out of memory\n");
+                    return -ENOMEM;
+                }
                 break;
             }
             case(ACID_INT):{
-                acid_handler(read, chunk);
+                if(acid_handler(read, chunk)){
+                    fprintf(stderr, "Error: ran out of memory\n");
+                    return -ENOMEM;
+                }
                 break;
             }
             case(WAVE_INT):{
-                wave_handler(read, chunk);
-                puts("wave read");
+                if(wave_handler(read, chunk)){
+                    fprintf(stderr, "Error: ran out of memory\n");
+                    return -ENOMEM;
+                }
                 break;
             }
             default:{
-                fprintf(stderr, "Error: unknown chunk %lx\n", btoi(buf, 4));
+                fprintf(stderr, "Error: unknown chunk %lx, skipping\n", btoi(buf, 4));
 
                 /* ignore chunk */
                 junk_handler(read, chunk);
