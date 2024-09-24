@@ -59,7 +59,12 @@ size_t buffer_read(FILE *__file, ck_t *__chunks, size_t __elements)
         return 0;
     
     size_t i = 0;
-    int channel = __chunks->settings->channel - 1;
+    int channel;
+    if(is_flag(__chunks->settings->param, ST_CHANNEL_SELECT))
+        channel = __chunks->settings->channel - 1;
+    else
+        channel = 0;
+
     char cbuf[FMT_MAX_CHANNELS * sizeof(int)] = {0};
 
     for(; i < __elements; i++){
@@ -89,9 +94,13 @@ size_t buffer_copy(ck_t *__chunks, size_t __size)
 size_t buffer_log(ck_t *__chunks, size_t __size)
 {
     size_t i = 0;
-    for(; i < __size; ++i)
+    for(; i < __size; ++i){
+        if(__chunks->data->logBuffer[i] < 1)
+            __chunks->data->logBuffer[i] = 1;
+        
         __chunks->data->logBuffer[i] = 20*log10(__chunks->data->logBuffer[i]);
 
+    }
     return i;
 }
 
